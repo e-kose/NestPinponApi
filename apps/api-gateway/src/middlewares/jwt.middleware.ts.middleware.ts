@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { unless } from 'express-unless';
 import * as jwt from 'jsonwebtoken'
 export function jwtMiddleware(
   req: Request,
@@ -6,7 +7,7 @@ export function jwtMiddleware(
   next: NextFunction,
 ) {
 
-  if (req.path.startsWith("/auth/hello") || req.path.startsWith("/auth/register")) {
+  if (req.path.startsWith("/auth/login") || req.path.startsWith("/auth/register") || req.path.endsWith("/docs")) {
     return next();
   }
 
@@ -28,3 +29,4 @@ export function jwtMiddleware(
     return res.status(403).json({ message: "Invalid or expired token" });
   }
 }
+(jwtMiddleware as any).unless = unless;

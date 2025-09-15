@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { UserModule } from './user/user.module';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserModule);
@@ -11,6 +12,15 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const config = new DocumentBuilder()
+    .setTitle('User servis dökumantasyonu')
+    .setDescription('NestJs user servis dökümantasyonu')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('/docs', app, document);
   await app.listen(process.env.PORT ?? 3002);
 }
 void bootstrap();
