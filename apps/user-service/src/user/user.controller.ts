@@ -10,6 +10,7 @@ import {
   Post,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -33,13 +34,15 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
+import { InternalKeyGuard } from './guards/internal-key/internal-key.guard';
 
 @ApiTags('Users')
-@ApiSecurity('bearerAuth')
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(InternalKeyGuard)
+  @ApiSecurity('internalKey')
   @ApiCustomResponses([
     {
       status: 201,
@@ -62,6 +65,8 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @UseGuards(InternalKeyGuard)
+  @ApiSecurity('internalKey')
   @Post('/login')
   @HttpCode(200)
   async login(@Body() body: LoginUserDto) {
@@ -77,6 +82,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Get('/user/id/:id')
   async getUserById(@Param('id') id: number) {
     return await this.userService.getUserById(id);
@@ -87,6 +93,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Get('/user/email/:email')
   async getUserByEmail(@Param('email') email: string) {
     return await this.userService.getUserByEmail(email);
@@ -97,6 +104,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Get('/user/username/:username')
   async getUserByUserName(@Param('username') username: string) {
     return await this.userService.getUserByUserName(username);
@@ -111,6 +119,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Patch('/user')
   async updateUser(@Req() req: Request, @Body() body: UpdateUserDto) {
     if (!req.headers['x-user-id'])
@@ -126,6 +135,7 @@ export class UserController {
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
   @ApiConsumes('multipart/form-data')
+  @ApiSecurity('bearerAuth')
   @ApiBody(AvatarApiBody)
   @Patch('/user/avatar')
   @UseInterceptors(FileInterceptor('avatar'))
@@ -149,6 +159,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Patch('/user/password')
   async updatePasword(@Req() req: Request, @Body() body: UpdatePasswordDto) {
     if (!req.headers['x-user-id'])
@@ -166,6 +177,7 @@ export class UserController {
     { status: 404, description: 'Kullanıcı bulunamadı', type: ErrorDto },
     { status: 500, description: 'Sunucu hatası', type: ErrorDto },
   ])
+  @ApiSecurity('bearerAuth')
   @Delete('/user')
   async deleteUser(@Req() req: Request) {
     if (!req.headers['x-user-id'])

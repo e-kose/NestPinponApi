@@ -132,7 +132,7 @@ export class UserService {
   }
 
   async updateAvatar(id: number, file: Express.Multer.File) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const filename =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       typeof file.filename === 'string' ? file.filename : 'avatar';

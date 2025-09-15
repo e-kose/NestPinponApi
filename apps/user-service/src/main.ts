@@ -18,6 +18,10 @@ async function bootstrap() {
     .setDescription('NestJs user servis dökümantasyonu')
     .setVersion('1.0')
     .addBearerAuth()
+    .addApiKey(
+      { type: 'apiKey', name: 'x-internal-key', in: 'header' },
+      'internalKey',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/docs', app, document);
