@@ -65,9 +65,10 @@ export class UserService {
   async login(body: LoginUserDto) {
     if (!body.username && !body.email)
       throw new BadRequestException('Kullanıcı adı veya email zorunlu');
-    const user = await (body.email
-      ? this.userRepo.findOneBy({ email: body.email })
-      : this.userRepo.findOneBy({ username: body.username }));
+    const user = await this.userRepo.findOne({
+      where: body.email ? { email: body.email } : { username: body.username },
+      relations: ['profile'],
+    });
     if (!user) throw new NotFoundException('User not found');
     const checkPass = await compareHashedValue(body.password, user.password);
     if (!checkPass)

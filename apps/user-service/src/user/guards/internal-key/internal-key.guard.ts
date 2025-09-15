@@ -16,7 +16,7 @@ export class InternalKeyGuard implements CanActivate {
 
     const internal_key = request.headers['x-internal-key'];
     if (!internal_key) throw new UnauthorizedException('Missing internal-key');
-    if (internal_key !== process.env.INTERNAL_KEY)
+    if (internal_key !== process.env.INTERNAL_API_KEY)
       throw new UnauthorizedException('Invalid internal key');
     return true;
   }

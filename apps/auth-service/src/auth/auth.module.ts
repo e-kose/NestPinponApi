@@ -5,6 +5,8 @@ import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import dbConfig from './config/db.config';
 import { AuthTable } from './entities/auth.entity';
+import { RefreshToken } from './entities/refresh_tokens.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -13,7 +15,8 @@ import { AuthTable } from './entities/auth.entity';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({ useFactory: dbConfig }),
-    TypeOrmModule.forFeature([AuthTable]),
+    TypeOrmModule.forFeature([AuthTable, RefreshToken]),
+    HttpModule
   ],
   controllers: [AuthController],
   providers: [AuthService],

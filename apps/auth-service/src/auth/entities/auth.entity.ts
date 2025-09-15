@@ -1,10 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 import { DateClass } from './date.class';
 
 @Entity()
 export class AuthTable extends DateClass {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  user_id: number;
 
   @Column({ nullable: true })
   oauth_id: string;

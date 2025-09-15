@@ -9,7 +9,14 @@ async function bootstrap() {
 
   app.use(
     (jwtMiddleware as any).unless({
-      path: ['/auth/login', '/auth/register', /^\/auth\/docs/, /^\/user\/docs/],
+      path: [
+        '/auth/login',
+        '/auth/register',
+        /^\/auth\/docs/,
+        /^\/user\/docs/,
+        '/user/login',
+        '/user/register',
+      ],
     }),
   );
   app.use(
