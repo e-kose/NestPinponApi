@@ -3,6 +3,8 @@ import {
   HttpException,
   Injectable,
   InternalServerErrorException,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthTable } from './entities/auth.entity';
@@ -14,8 +16,10 @@ import { LoginUserDto } from './dto/loginUserDto';
 import { catchErrorFunction } from './utils/catchError';
 import { generateToken } from './utils/generate.token';
 import { RefreshToken } from './entities/refresh_tokens.entity';
-import { hashingValue } from './utils/hash.utils';
-
+import { compareHashedValue, hashingValue } from './utils/hash.utils';
+import type { Response } from 'express';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 @Injectable()
 export class AuthService {
   constructor(
@@ -48,7 +52,6 @@ export class AuthService {
       await this.authRepo.save(user);
       return res.data;
     } catch (error) {
-      console.error(error);
       return catchErrorFunction(error);
     }
   }
@@ -75,7 +78,7 @@ export class AuthService {
     let hashRefresh = '';
     const auth = await this.authRepo.findOneBy({ user_id: id });
     const refreshRecord = await this.refreshRepo.findOneBy({ user_id: id });
-    if (refreshToken !== '') hashRefresh = await hashingValue(refreshToken);    
+    if (refreshToken !== '') hashRefresh = await hashingValue(refreshToken);
     if (!refreshRecord) {
       const refresh = this.refreshRepo.create({
         user_id: id,
@@ -83,8 +86,71 @@ export class AuthService {
         token: hashRefresh,
       });
       await this.refreshRepo.save(refresh);
-    }else{
-      await this.refreshRepo.update({user_id: id}, {token: hashRefresh})
+    } else {
+      await this.refreshRepo.update({ user_id: id }, { token: hashRefresh });
+    }
+  }
+
+  async refreshToken(id: number, refresh: string) {
+    const refreshRecord = await this.refreshRepo.findOneByOrFail({
+      user_id: id,
+    });
+    const isValid = compareHashedValue(refresh, refreshRecord.token);
+    if (!isValid) throw new UnauthorizedException('Tokens do not match');
+    try {
+      const data = await firstValueFrom(
+        this.httpService.get(this.userService + `/user/id/${id}`),
+      );
+      const payload: any = { id, email: data.data.user.email };
+      const { accessToken, refreshToken } = generateToken(payload);
+      await this.updateRefreshToken(payload.id, refreshToken);
+      return { accessToken, refreshToken };
+    } catch (error) {
+      catchErrorFunction(error);
+    }
+  }
+
+  async twoFaSetup(id: number, email: string) {
+    const secret = speakeasy.generateSecret({
+      name: `NestPinpon: ${email}`,
+      issuer: 'NestPinpon',
+      length: 32,
+    });
+    const res = await this.authRepo.update(
+      { user_id: id },
+      { twofa_secret: secret.base32 },
+    );
+    const qrDataUrl = await QRCode.toDataURL(secret.otpauth_url || '');
+    return { success: true, qr: qrDataUrl };
+  }
+
+  async twoFaEnable(id: number, token: string) {
+    const auth = await this.authRepo.findOneByOrFail({ user_id: id });
+    if (!auth.twofa_secret)
+      throw new BadRequestException('Two Factor has not been created');
+    const verified = speakeasy.totp.verify({
+      secret: auth.twofa_secret,
+      encoding: 'base32',
+      token,
+      window: 1,
+    });
+    if (!verified)
+      throw new UnauthorizedException('Token is invalid or deleted');
+    try {
+      const data = await firstValueFrom(
+        this.httpService.patch(
+          this.userService + '/user',
+          {
+            is_2fa_enabled: true,
+          },
+          { headers: { 'x-user-id': id } },
+        ),
+      );
+      await this.authRepo.update({ user_id: id }, { twofa_enable: true });
+      return { success: true, message: '2FA enabled' };
+    } catch (error) {
+      console.log(error.message)
+      catchErrorFunction(error);
     }
   }
 }

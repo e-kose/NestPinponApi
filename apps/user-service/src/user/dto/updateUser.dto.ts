@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export const AvatarApiBody = {
   schema: {
@@ -52,6 +57,11 @@ export class UpdateUserDto {
   @IsOptional()
   @ApiProperty({ example: 'ertu@gmail.com' })
   email?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({ example: true })
+  is_2fa_enabled: boolean;
 
   @ValidateNested()
   @ApiProperty()
