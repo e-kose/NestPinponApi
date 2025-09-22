@@ -36,6 +36,13 @@ async function bootstrap() {
       parseReqBody: false,
     }),
   );
+
+    app.use(
+    '/chat',
+    proxy(process.env.CHAT_SERVICE_URL || 'http://localhost:3003', {
+      parseReqBody: false,
+    }),
+  );
   await app.listen(process.env.PORT ?? 3000);
   console.log('🚀 API Gateway running on http://localhost:3000');
 }

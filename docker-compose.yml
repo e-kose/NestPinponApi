@@ -9,6 +9,7 @@ services:
       - ./apps/user-service/.env
     volumes:
       - postgres:/data/db
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
   api-gateway: 
     build:
       context: ./apps/api-gateway
@@ -16,6 +17,9 @@ services:
       - "3000:3000"
     depends_on:
       - auth-service
+      - chat-service
+      - postgres
+      - user-service
     env_file:
       - ./apps/api-gateway/.env
     networks:
@@ -42,7 +46,18 @@ services:
       - ./apps/user-service/.env
     restart: always
     networks:
-      - internal-networks    
+      - internal-networks
+  
+  chat-service:
+    build:
+      context: ./apps/chat-service
+    expose:
+      - "3003"
+    env_file:
+      - ./apps/chat-service/.env
+    restart: always
+    networks:
+      - internal-networks
   
 networks:
   internal-networks:

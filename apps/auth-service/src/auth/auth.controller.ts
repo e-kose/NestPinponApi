@@ -13,6 +13,7 @@ import { CreateUserDto } from './dto/createUserDto';
 import { LoginUserDto } from './dto/loginUserDto';
 import type { Response } from 'express';
 import { reqFromFindUser } from './utils/utils';
+import { catchErrorFunction } from './utils/catchError';
 
 @Controller()
 export class AuthController {
@@ -81,5 +82,12 @@ export class AuthController {
     const userId = reqFromFindUser(req);
     if (!token) throw new BadRequestException('Token required');
     return await this.authService.twoFaEnable(userId, token);
+  }
+
+  @Post('/twofa_disable')
+  async twoFaDisable(@Req() req: Request, @Body('token') token: string){
+    const userId = reqFromFindUser(req);
+    if (!token) throw new BadRequestException('Token required');
+    return await this.authService.twoFaDisable(userId, token);
   }
 }

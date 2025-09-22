@@ -16,4 +16,9 @@ export class LoginUserDto {
   @IsString()
   @ApiProperty({ example: '123456erT.', description: 'Kullanıcı şifresi' })
   password: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ example: '1111', description: '2Fa token' })
+  token?: string;
 }

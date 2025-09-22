@@ -66,6 +66,26 @@ export class AuthService {
         username: res.data.user.username,
         email: res.data.user.email,
       };
+      const auth = await this.authRepo.findOneBy({ user_id: payload.id });
+      if (auth && auth.twofa_enable) {
+        if (!body.token) {
+          throw new HttpException(
+            { success: false, message: '2FA token required' },
+            401,
+          );
+        }
+        const isValid = speakeasy.totp.verify({
+          secret: auth.twofa_secret,
+          encoding: 'base32',
+          token: body.token,
+          window: 1,
+        });
+        if (!isValid)
+          throw new HttpException(
+            { success: false, message: '2FA token invalid' },
+            401,
+          );
+      }
       const { accessToken, refreshToken } = generateToken(payload);
       await this.updateRefreshToken(payload.id, refreshToken);
       return { success: true, accessToken, refreshToken, data: res.data };
@@ -149,7 +169,42 @@ export class AuthService {
       await this.authRepo.update({ user_id: id }, { twofa_enable: true });
       return { success: true, message: '2FA enabled' };
     } catch (error) {
-      console.log(error.message)
+      catchErrorFunction(error);
+    }
+  }
+
+  async twoFaDisable(id: number, token: string) {
+    const auth = await this.authRepo.findOneByOrFail({ user_id: id });
+    if (!auth.twofa_enable) {
+      throw new HttpException(
+        { success: false, message: 'Two factor inactive' },
+        400,
+      );
+    }
+    const verified = speakeasy.totp.verify({
+      secret: auth.twofa_secret,
+      encoding: 'base32',
+      token,
+      window: 1,
+    });
+    if (!verified)
+      throw new UnauthorizedException('Token is invalid or deleted');
+    try {
+      const data = await firstValueFrom(
+        this.httpService.patch(
+          this.userService + `/user`,
+          {
+            is_2fa_enabled: false,
+          },
+          { headers: { 'x-user-id': id } },
+        ),
+      );
+      await this.authRepo.update({ user_id: id }, { twofa_enable: false });
+      return {
+        success: true,
+        message: 'Two-factor authentication has been disabled',
+      };
+    } catch (error) {
       catchErrorFunction(error);
     }
   }
