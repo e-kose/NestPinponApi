@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import dbConfig from './config/db.config';
 import { Message } from './entities/message.entity';
 import { BlockedUser } from './entities/blocked_users.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { BlockedUser } from './entities/blocked_users.entity';
       expandVariables: true
     }),
     TypeOrmModule.forRootAsync({useFactory: dbConfig}),
-    TypeOrmModule.forFeature([Message, BlockedUser])
+    TypeOrmModule.forFeature([Message, BlockedUser]),
+    HttpModule
   ],
   providers: [ChatService],
   controllers: [ChatController]

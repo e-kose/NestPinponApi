@@ -1,8 +1,10 @@
 import {
   Controller,
   Get,
+  HttpCode,
   HttpException,
   Param,
+  Post,
   Query,
   Req,
 } from '@nestjs/common';
@@ -38,5 +40,20 @@ export class ChatController {
     } catch (error) {
       catchErrorFunction(error);
     }
+  }
+
+  @Post('/block/id/:id')
+  async blockUser(@Param('id') blockedId: number, @Req() req: Request) {
+    const blockingId = reqFromFindUser(req);
+    const data = await this.chatService.blockUser(+blockingId, +blockedId);
+    return {success: true, message: 'User blocked', data };
+  }
+
+  @HttpCode(200)
+  @Post('/remove-block/id/:id')
+  async removeBlock(@Param('id') blockedId: number, @Req() req: Request) {
+    const blockingId = reqFromFindUser(req);
+    const data = await this.chatService.removeBlock(+blockingId, +blockedId);
+    return {succes: true, message: 'The user block has been removed.', data}
   }
 }
